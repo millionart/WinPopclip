@@ -13,7 +13,10 @@ dpiRatio:=A_ScreenDPI/96
 controlHight:=25
 winHeightPx:=controlHight*dpiRatio
 bGColor:="000000"
+fontColor:="ffffff"
 ver:="0.1"
+fontSize:=12
+fontFamily:="微软雅黑"
 
 Loop, read, %A_ScriptDir%/White List.txt
 {
@@ -50,6 +53,12 @@ ExitScrit:
 ExitApp
 Return
 
+#IfWinNotActive, ahk_group whiteList
+~LButton::
+Gui,Destroy
+Return
+#IfWinNotActive
+
 #IfWinActive, ahk_group whiteList
 ; 如果不在脚本界面状态下
 $LButton::
@@ -80,7 +89,6 @@ Return
 ShowMainGui(perPosX,perPosY,preTime)
 {
     global
-
     ; 获得当前时间
     curTime:=A_TickCount
     ; 当前时间减去之前时间
@@ -90,9 +98,9 @@ ShowMainGui(perPosX,perPosY,preTime)
     MouseGetPos, curPosX, curPosY
 
     guiShowX:=curPosX
-    guiShowY:=curPosY-winHeightPx*1.5 ;*dpiRatio
+    guiShowY:=curPosY-winHeightPx*2 ;*dpiRatio
 
-    If (A_PriorHotkey = "$LButton" and A_TimeSincePriorHotkey < 500 and A_Cursor="IBeam")
+    If (A_PriorHotkey = "$LButton" and A_TimeSincePriorHotkey < 500)
     {
         GetSelectText()
         ShowWinclip()
@@ -118,42 +126,13 @@ ShowMainGui(perPosX,perPosY,preTime)
     winClipToggle:=0
 }
 
-ShowWinclip()
-{
-    global
-    local x,y,w,h
-    ;ToolTip, %selectText%
-    Gui, Destroy
-    Gui, +ToolWindow -Caption +AlwaysOnTop ; -DPIScale
-    Gui, Color, %bGColor%
-    Gui, font, s12 cffffff, 微软雅黑
-    Gui, Add, Button, x0 y0 h%controlHight% -Wrap vsearch gGoogleSearch, ` 🔍` ` 
-    Gui, Add, Button, x+0 yp h%controlHight% -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
-
-    If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
-    {
-        Gui, Add, Button, x+0 yp h%controlHight% -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
-    }
-    Else
-    {
-        Gui, Add, Button, x+0 yp h%controlHight% -Wrap vcopy gCopy, ` ` 复制` ` ` 
-        Gui, Add, Button, x+0 yp h%controlHight% -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
-        ;Gui, Add, Button, x+0 yp h%controlHight% -Wrap vlink gLink, ` ` 链接` ` ` 
-        Gui, Add, Button, x+0 yp h%controlHight% -Wrap vtranslate gGoogleTranslate, ` ` 翻译` ` ` 
-    }
-    Gui, font
-    Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
-    WinGetPos , x, y, w, h, %winTitle%
-    WinMove, %winTitle%, , x-w/2, y, w-15*dpiRatio, %winHeightPx%
-}
-
 GetSelectText()
 {
     global
     ClipSaved:=ClipBoardAll
     ClipBoard:=""
     Send, {CtrlDown}c
-    ClipWait 1, 1
+    ClipWait 0.4, 1
     Send, {CtrlUp}
     selectText:=ClipBoard
     ClipBoard:=""
@@ -161,18 +140,60 @@ GetSelectText()
     ; ToolTip,[%selectText%]
 }
 
+ShowWinclip()
+{
+    global
+    local x,y,w,h,winMoveX,winMoveY
+    ;ToolTip, %selectText%
+    Gui, Destroy
+    Gui, +ToolWindow -Caption +AlwaysOnTop ; -DPIScale
+    Gui, Color, %bGColor%
+    Gui, font, s%fontSize% c%fontColor%, %fontFamily%
+    Gui, Add, Text, x0 y0 w0 h%controlHight% -Wrap, ; 初始定位
+
+    If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
+    {
+        Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+        Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+    }
+    Else
+    {
+        Gui, Add, Button, x+0 yp hp -Wrap vsearch gGoogleSearch, ` 🔍` ` 
+        Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+        Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
+        Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+        ;Gui, Add, Button, x+0 yp hp -Wrap vlink gLink, ` ` 链接` ` ` 
+        Gui, Add, Button, x+0 yp hp -Wrap vtranslate gGoogleTranslate, ` ` 翻译` ` ` 
+    }
+
+    Gui, font
+    Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
+    WinGetPos , x, y, w, h, %winTitle%
+
+    winMoveX:=Max(x-w/2,0)
+    If (winMoveX > A_ScreenWidth-w+15*dpiRatio)
+        winMoveX:=A_ScreenWidth-w+15*dpiRatio
+
+    winMoveY:=Max(y,0)
+
+    WinMove, %winTitle%, , winMoveX, winMoveY, w-15*dpiRatio, %winHeightPx%
+}
+
 GoogleSearch:
+    Gui, Destroy
     Run, https://www.google.com/search?ie=utf-8&oe=utf-8&q=%selectText%
-    Gosub, RestoreClipBoard
 Return
 
 SelectAll:
+    Gui, Destroy
     WinActivate, ahk_id %win%
     WinWaitActive, ahk_id %win%
+    Click, %perPosX%, %perPosY%
     Send, {CtrlDown}a
     Sleep, 100
     Send, {CtrlUp}
-    Gosub, RestoreClipBoard
+    GetSelectText()
+    ShowWinclip()
 Return
 
 Copy:
@@ -193,20 +214,14 @@ Paste:
 Return
 
 Link:
+    Gui, Destroy
     Run, https://www.google.com/search?ie=utf-8&oe=utf-8&q=%selectText%
-    Gosub, RestoreClipBoard
 Return
 
 GoogleTranslate:
+    Gui, Destroy
 ; https%3A%2F%2Ftranslate.google.cn%2F%23auto%2Fzh-CN%2F%25ClipBoard%25
     Run, https://translate.google.cn/#auto/zh-CN/%selectText%
-    Gosub, RestoreClipBoard
-Return
-
-RestoreClipBoard:
-    ClipBoard:=""
-    ClipBoard:=ClipSaved
-    Gui, Destroy
 Return
 
 ; working...

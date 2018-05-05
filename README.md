@@ -1,7 +1,7 @@
 # WinClip.ahk
 Winclip is a software that imitates popclip on Windows, written using autohotkey.
 
-(https://raw.githubusercontent.com/millionart/WinClip.ahk/screenshots/winclipcn.png "WwecCChat")
+(https://raw.githubusercontent.com/millionart/WinClip.ahk/Screenshots/winclipcn.png "WeChat")
 
 ## Usage
 * Download and install Autohotkey from the official website

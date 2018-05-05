@@ -1,7 +1,7 @@
 # WinClip.ahk
 Winclip is a software that imitates popclip on Windows, written using autohotkey.
 
-(https://raw.githubusercontent.com/millionart/WinClip.ahk/Screenshots/winclipcn.png "WeChat")
+![GitHub](https://raw.githubusercontent.com/millionart/WinClip.ahk/Screenshots/winclipcn.png "WeChat")
 
 ## Usage
 * Download and install Autohotkey from the official website
@@ -20,4 +20,4 @@ or
 
 wechat | alipay
 ---- | ---
-![GitHub](https://millionart.gitbooks.io/shader-forge-chinese-manual-unofficial/content/assets/wechat.png "WwecCChat") | ![GitHub](https://millionart.gitbooks.io/shader-forge-chinese-manual-unofficial/content/assets/alipay.png "alipay")
+![GitHub](https://millionart.gitbooks.io/shader-forge-chinese-manual-unofficial/content/assets/wechat.png "WeChat") | ![GitHub](https://millionart.gitbooks.io/shader-forge-chinese-manual-unofficial/content/assets/alipay.png "alipay")

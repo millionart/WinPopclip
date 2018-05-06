@@ -188,14 +188,23 @@ ShowWinclip()
     If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
     {
         Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+        If (winClipToggle=1)
         Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
     }
     Else
     {
         Gui, Add, Button, x+0 yp hp -Wrap vsearch gGoogleSearch, ` 🔍` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+        If (winClipToggle=1)
+        {
+            Gui, Add, Button, x+0 yp hp -Wrap vcut gCut, ` ` 剪切` ` `
         Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+        }
+        Else
+        {
+            Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
+        }
         If (linkText!="")
             Gui, Add, Button, x+0 yp hp -Wrap vlink gLink, ` ` 链接` ` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vtranslate gGoogleTranslate, ` ` 翻译` ` ` 
@@ -235,6 +244,15 @@ Copy:
     Gui, Destroy
     WinActivate, ahk_id %win%
     WinWaitActive, ahk_id %win%
+    ClipBoard:=""
+    ClipBoard:=selectText
+Return
+
+Cut:
+    Gui, Destroy
+    WinActivate, ahk_id %win%
+    WinWaitActive, ahk_id %win%
+    Send, {Del}
     ClipBoard:=""
     ClipBoard:=selectText
 Return

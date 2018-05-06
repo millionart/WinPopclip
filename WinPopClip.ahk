@@ -8,6 +8,22 @@ SendMode, Input ; Recommended for new scripts due to its superior speed and reli
 SetBatchLines -1
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
+full_command_line := DllCall("GetCommandLine", "str")
+
+if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
+{
+    try
+    {
+        if A_IsCompiled
+            Run *RunAs "%A_ScriptFullPath%" /restart
+        else
+            Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%"
+    }
+    ExitApp
+}
+
+; MsgBox A_IsAdmin: %A_IsAdmin%`nCommand line: %full_command_line%
+
 winTitle:="WinClipTitle"
 dpiRatio:=A_ScreenDPI/96
 controlHight:=25
@@ -100,7 +116,7 @@ ShowMainGui(perPosX,perPosY,preTime)
     guiShowX:=curPosX
     guiShowY:=curPosY-winHeightPx*2 ;*dpiRatio
 
-    If (A_PriorHotkey = "$LButton" and A_TimeSincePriorHotkey < 500)
+    If (A_TimeSincePriorHotkey < 500)
     {
         GetSelectText()
         ShowWinclip()
@@ -137,6 +153,24 @@ GetSelectText()
     selectText:=ClipBoard
     ClipBoard:=""
     ClipBoard:=ClipSaved
+    ; 处理协议地址
+    linkText:=""
+    findLinkPos:=InStr(selectText, "://")
+    If (findLinkPos>3)
+    {
+        ; 把字符串拆分
+        Loop, Parse, selectText , %A_Tab%%A_Space%`r`n`"
+        {
+			findLinkPos:=InStr(A_LoopField, "://")
+			If (findLinkPos>3)
+			{
+				linkText:=A_LoopField
+				Break		
+			}
+        }
+    }
+    ;        从右往左找空格
+    ;ToolTip,%findLinkPos%
     ; ToolTip,[%selectText%]
 }
 
@@ -162,7 +196,8 @@ ShowWinclip()
         Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
-        ;Gui, Add, Button, x+0 yp hp -Wrap vlink gLink, ` ` 链接` ` ` 
+        If (linkText!="")
+            Gui, Add, Button, x+0 yp hp -Wrap vlink gLink, ` ` 链接` ` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vtranslate gGoogleTranslate, ` ` 翻译` ` ` 
     }
 
@@ -215,7 +250,7 @@ Return
 
 Link:
     Gui, Destroy
-    Run, https://www.google.com/search?ie=utf-8&oe=utf-8&q=%selectText%
+    Run, %linkText%
 Return
 
 GoogleTranslate:

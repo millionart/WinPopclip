@@ -1,11 +1,11 @@
-# WinClip.ahk
-Winclip is a software that imitates popclip on Windows, written using autohotkey.
+# WinPopClip.ahk
+WinPopClip is a software that imitates popclip on Windows, written using autohotkey.
 
-![GitHub](https://raw.githubusercontent.com/millionart/WinClip.ahk/Screenshots/winclipcn.png "WeChat")
+![GitHub](https://raw.githubusercontent.com/millionart/WinPopClip.ahk/Screenshots/winclipcn.png "WeChat")
 
 ## Usage
 * Download and install Autohotkey from the [official website](https://www.autohotkey.com/download/)
-* Download winclip [source code](https://github.com/millionart/WinClip.ahk/releases) and unzip it
+* Download winclip [source code](https://github.com/millionart/WinPopClip.ahk/releases) and unzip it
 * Double-click winclip.ahk to execute the script
 
 ## Other

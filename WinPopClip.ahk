@@ -155,23 +155,7 @@ GetSelectText()
     ClipBoard:=ClipSaved
     ; 处理协议地址
     linkText:=""
-    findLinkPos:=InStr(selectText, "://")
-    If (findLinkPos>3)
-    {
-        ; 把字符串拆分
-        Loop, Parse, selectText , %A_Tab%%A_Space%`r`n`"
-        {
-			findLinkPos:=InStr(A_LoopField, "://")
-			If (findLinkPos>3)
-			{
-				linkText:=A_LoopField
-				Break		
-			}
-        }
-    }
-    ;        从右往左找空格
-    ;ToolTip,%findLinkPos%
-    ; ToolTip,[%selectText%]
+    RegExMatch(selectText, "(https?|ftp|file|ed2k|thunder)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]", linkText)
 }
 
 ShowWinclip()
@@ -268,6 +252,7 @@ Return
 
 Link:
     Gui, Destroy
+    Try
     Run, %linkText%
 Return
 

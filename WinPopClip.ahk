@@ -258,12 +258,14 @@ Return
 
 GoogleTranslate:
     Gui, Destroy
-; https%3A%2F%2Ftranslate.google.cn%2F%23auto%2Fzh-CN%2F%25ClipBoard%25
-    Run, https://translate.google.cn/#auto/zh-CN/%selectText%
+    transText:=UriEncode(selectText)
+    Run, https://translate.google.cn/#auto/zh-CN/%transText%
 Return
 
-; working...
-URLEncoding(string)
-{
-    string:=StrReplace(string, SearchText , ReplaceText)
+; from http://the-automator.com/parse-url-parameters/
+UriEncode(Uri, RE="[0-9A-Za-z]"){
+    VarSetCapacity(Var,StrPut(Uri,"UTF-8"),0),StrPut(Uri,&Var,"UTF-8")
+    While Code:=NumGet(Var,A_Index-1,"UChar")
+    Res.=(Chr:=Chr(Code))~=RE?Chr:Format("%{:02X}",Code)
+    Return,Res
 }

@@ -116,8 +116,9 @@ ShowMainGui(perPosX,perPosY,preTime)
     guiShowX:=curPosX
     guiShowY:=curPosY-winHeightPx*2 ;*dpiRatio
 
-    If (A_TimeSincePriorHotkey < 500)
+    If (A_TimeSincePriorHotkey < 410) && (A_Cursor="IBeam")
     {
+        
         GetSelectText()
         ShowWinclip()
     }
@@ -148,14 +149,14 @@ GetSelectText()
     ClipSaved:=ClipBoardAll
     ClipBoard:=""
     Send, {CtrlDown}c
-    ClipWait 0.4, 1
+    ClipWait 0.1, 1
     Send, {CtrlUp}
     selectText:=ClipBoard
     ClipBoard:=""
     ClipBoard:=ClipSaved
     ; 处理协议地址
     linkText:=""
-    RegExMatch(selectText, "(https?|ftp|file|ed2k|thunder)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]", linkText)
+    RegExMatch(selectText, "(https?|ftp|file|ed2k|steam|thunder)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]", linkText)
 }
 
 ShowWinclip()
@@ -171,9 +172,11 @@ ShowWinclip()
 
     If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
     {
-        Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
         If (winClipToggle=1)
-        Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+        {
+            Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+            Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+        }
     }
     Else
     {
@@ -182,8 +185,8 @@ ShowWinclip()
         If (winClipToggle=1)
         {
             Gui, Add, Button, x+0 yp hp -Wrap vcut gCut, ` ` 剪切` ` `
-        Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
-        Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+            Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
+            Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
         }
         Else
         {
@@ -209,14 +212,14 @@ ShowWinclip()
 
 GoogleSearch:
     Gui, Destroy
-    Run, https://www.google.com/search?ie=utf-8&oe=utf-8&q=%selectText%
+    urlEncodedText:=UriEncode(selectText)
+    Run, https://www.google.com/search?ie=utf-8&oe=utf-8&q=%urlEncodedText%
 Return
 
 SelectAll:
     Gui, Destroy
     WinActivate, ahk_id %win%
     WinWaitActive, ahk_id %win%
-    Click, %perPosX%, %perPosY%
     Send, {CtrlDown}a
     Sleep, 100
     Send, {CtrlUp}
@@ -258,8 +261,8 @@ Return
 
 GoogleTranslate:
     Gui, Destroy
-    transText:=UriEncode(selectText)
-    Run, https://translate.google.cn/#auto/zh-CN/%transText%
+    urlEncodedText:=UriEncode(selectText)
+    Run, https://translate.google.cn/#auto/zh-CN/%urlEncodedText%
 Return
 
 ; from http://the-automator.com/parse-url-parameters/

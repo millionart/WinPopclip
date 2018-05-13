@@ -30,7 +30,7 @@ controlHight:=25
 winHeightPx:=controlHight*dpiRatio
 bGColor:="000000"
 fontColor:="ffffff"
-ver:="0.1"
+ver:="0.6"
 fontSize:=12
 fontFamily:="微软雅黑"
 
@@ -57,11 +57,11 @@ Pause, Toggle, 1
 Return
 
 UpdateScrit:
-Run, https://github.com/millionart/WinClip.ahk/releases
+Run, https://github.com/millionart/WinPopclip/releases
 Return
 
 Issues:
-Run, https://github.com/millionart/WinClip.ahk/issues
+Run, https://github.com/millionart/WinPopclip/issues
 Return
 
 ExitScrit:
@@ -156,7 +156,18 @@ GetSelectText()
     ClipBoard:=ClipSaved
     ; 处理协议地址
     linkText:=""
-    RegExMatch(selectText, "(https?|ftp|file|ed2k|steam|thunder)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]", linkText)
+    ; https://gist.github.com/dperini/729294
+    ; https://mathiasbynens.be/demo/url-regex
+    urlRegEx:="(?:(?:https?|ftp|file|ed2k|steam|thunder)://)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)(?:\.(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)*(?:\.(?:[a-z\x{00a1}-\x{ffff}]{2,})))(?::\d{2,5})?(?:/[^\s]*)?"
+    RegExMatch(selectText, urlRegEx, linkText)
+
+    If (linkText="")
+    {
+        urlRegEx:="(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'.,<>?«»“”‘’]))"
+        RegExMatch(selectText, urlRegEx, linkText)
+        If (linkText!="")
+            linkText:="http://" . linkText
+    }
 }
 
 ShowWinclip()

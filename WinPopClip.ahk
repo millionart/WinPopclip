@@ -35,6 +35,7 @@ ver:="0.7"
 fontSize:=12
 fontFamily:="微软雅黑"
 userLanguage:="zh-CN"
+SyncPath:="E:\Dropbox"
 
 Loop, read, %A_ScriptDir%/White List.txt
 {
@@ -263,6 +264,12 @@ Copy:
 	WinWaitActive, ahk_id %win%
 	ClipBoard:=""
 	ClipBoard:=selectText
+	FileSetAttrib, -R, %SyncPath%\WinPopclip
+	FileDelete, %SyncPath%\WinPopclip
+	FileAppend,
+	(
+	%selectText%
+	), %SyncPath%\WinPopclip
 Return
 
 Cut:

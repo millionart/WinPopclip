@@ -296,6 +296,7 @@ GoogleTranslate:
 	Gui, Destroy
 	urlEncodedText:=UriEncode(selectText)
 
+/*
 	keyShiftDown:=GetKeyState("Shift" , "P")
 	If (keyShiftDown=0)
 	{
@@ -308,7 +309,8 @@ GoogleTranslate:
 		GuiControl,, TranslateResult, % TransBox(urlEncodedText, "auto", userLanguage)		
 	}
 	Else
-		Run, https://translate.google.cn/#auto/%userLanguage%/%urlEncodedText%
+*/
+	Run, https://translate.google.com/#view=home&op=translate&sl=auto&tl=%userLanguage%&text=%urlEncodedText%
 Return
 
 ; from http://the-automator.com/parse-url-parameters/
@@ -322,7 +324,7 @@ UriEncode(Uri, RE="[0-9A-Za-z]"){
 TransBox(text,originalLang,tragetLang) {
     pwb := ComObjCreate("InternetExplorer.Application")
     pwb.Visible := False
-    pwb.Navigate("https://translate.google.com/?hl=" . userLanguage . "#" . originalLang . "/" . tragetLang . "/" text)
+    pwb.Navigate("https://translate.google.com/#view=home&op=translate&sl=" . originalLang . "&tl=" . tragetLang . "&text=" text)
 
     Loop {
         IfWinExist, ahk_exe iexplorer.exe

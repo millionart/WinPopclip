@@ -1,4 +1,5 @@
 115chrome.exe
+Acrobat.exe
 battle.net.exe
 bcompare.exe
 chrome.exe
@@ -12,9 +13,11 @@ keygen.exe
 mailspring.exe
 microsoftedge.exe
 microsoftedgecp.exe
+msedge.exe
 notepad++.exe
 notepad.exe
 opera.exe
+poedit.exe
 qq.exe
 steam.exe
 steamwebhelper.exe

@@ -1,4 +1,4 @@
-﻿#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
+#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
 #SingleInstance, force
 #InstallMouseHook
 AutoTrim, Off
@@ -36,6 +36,8 @@ fontSize:=12
 fontFamily:="微软雅黑"
 userLanguage:="zh-CN"
 SyncPath:="E:\Dropbox"
+SysGet, VirtualWidth, 78
+SysGet, VirtualHeight, 79
 
 Loop, read, %A_ScriptDir%/White List.txt
 {
@@ -234,8 +236,8 @@ ShowWinclip()
     WinGetPos , x, y, w, h, %winTitle%
     
     winMoveX:=Max(x-w/2,0)
-    If (winMoveX > A_ScreenWidth-w+15*dpiRatio)
-        winMoveX:=A_ScreenWidth-w+15*dpiRatio
+    If (winMoveX > VirtualWidth-w+15*dpiRatio)
+        winMoveX:=VirtualWidth-w+15*dpiRatio
     
     winMoveY:=Max(y,0)
     

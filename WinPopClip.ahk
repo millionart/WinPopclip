@@ -1,4 +1,4 @@
-#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
+﻿#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
 #SingleInstance, force
 #InstallMouseHook
 AutoTrim, Off
@@ -31,7 +31,7 @@ controlHight:=25
 winHeightPx:=controlHight*dpiRatio
 bGColor:="000000"
 fontColor:="ffffff"
-ver:="0.7"
+ver:="0.9"
 fontSize:=12
 fontFamily:="微软雅黑"
 userLanguage:="zh-CN"
@@ -90,15 +90,15 @@ $LButton::
     preTime:=A_TickCount
     If (A_Cursor="IBeam")
         winClipToggle:=1
-    
+
     Send, {LButton Down}
     KeyWait, LButton
-    
+
     Send, {LButton Up}
-    
+
     If (A_Cursor="IBeam")
         winClipToggle:=1
-    
+
     If !WinActive(winTitle)
     {
         win:= WinExist("A")
@@ -114,16 +114,16 @@ ShowMainGui(perPosX,perPosY,preTime)
     curTime:=A_TickCount
     ; 当前时间减去之前时间
     lButtonDownDelay:=curTime-preTime
-    
+
     ; 获得鼠标当前坐标
     MouseGetPos, curPosX, curPosY
-    
+
     guiShowX:=curPosX
     guiShowY:=curPosY-winHeightPx*2 ;*dpiRatio
-    
+
     If (A_TimeSincePriorHotkey < 410) && (A_Cursor="IBeam")
     {
-        
+
         GetSelectText()
         ShowWinclip()
     }
@@ -132,7 +132,7 @@ ShowMainGui(perPosX,perPosY,preTime)
         ; 当前坐标剪去先前坐标
         moveX:=abs(curPosX-perPosX)
         moveY:=abs(curPosY-perPosY)
-        
+
         ; 如果X大于10，Y大于10, 在当前坐标弹出界面
         If (moveX>10) || (moveY>10)
         {
@@ -144,7 +144,7 @@ ShowMainGui(perPosX,perPosY,preTime)
     {
         Gui, Destroy
     }
-    
+
     winClipToggle:=0
 }
 
@@ -169,19 +169,19 @@ GetSelectText()
     ; https://mathiasbynens.be/demo/url-regex
     urlRegEx:="(?:(?:https?|ftp|file|ed2k|steam|thunder)://)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)(?:\.(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)*(?:\.(?:[a-z\x{00a1}-\x{ffff}]{2,})))(?::\d{2,5})?(?:/[^\s]*)?"
     RegExMatch(selectText, urlRegEx, linkText)
-    
+
     urlRegEx:="(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])"
     RegExMatch(selectText, urlRegEx, ipText)
-    
+
     If (linkText="")
     {
         ; https://daringfireball.net/2010/07/improved_regex_for_matching_urls
         urlRegEx:="(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'.,<>?«»“”‘’]))"
         RegExMatch(selectText, urlRegEx, linkText)
-        
+
         urlRegEx:="av\d+"
         RegExMatch(selectText, urlRegEx, bilibili)
-        
+
         If (linkText!="")
             linkText:="http://" . linkText
         Else If (bilibili!="")
@@ -202,7 +202,7 @@ ShowWinclip()
     Gui, Color, %bGColor%
     Gui, font, s%fontSize% c%fontColor%, %fontFamily%
     Gui, Add, Text, x0 y0 w0 h%controlHight% -Wrap, ; 初始定位
-    
+
     If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
     {
         If (winClipToggle=1)
@@ -230,17 +230,17 @@ ShowWinclip()
         Gui, Add, Button, x+0 yp hp -Wrap vgTranslate gGoogleTranslate, ` ` G 翻译` ` ` 
         Gui, Add, Button, x+0 yp hp -Wrap vdTranslate gDeepLTranslate, ` ` D 翻译` ` ` 
     }
-    
+
     Gui, font
     Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
     WinGetPos , x, y, w, h, %winTitle%
-    
-    winMoveX:=Max(x-w/2,0)
+
+    winMoveX:=x-w/2,0
     If (winMoveX > VirtualWidth-w+15*dpiRatio)
         winMoveX:=VirtualWidth-w+15*dpiRatio
-    
+
     winMoveY:=Max(y,0)
-    
+
     WinMove, %winTitle%, , winMoveX, winMoveY, w-15*dpiRatio, %winHeightPx%
 }
 
@@ -315,7 +315,7 @@ UriEncode(Uri, RE="[0-9A-Za-z]"){
     VarSetCapacity(Var,StrPut(Uri,"UTF-8"),0),StrPut(Uri,&Var,"UTF-8")
     While Code:=NumGet(Var,A_Index-1,"UChar")
         Res.=(Chr:=Chr(Code))~=RE?Chr:Format("%{:02X}",Code)
-    
+
     Res:=StrReplace(Res, "&", "%26")
     Res:=StrReplace(Res, "`n", "%0A")
 Return,Res
@@ -325,17 +325,17 @@ TransBox(text,originalLang,tragetLang) {
     pwb := ComObjCreate("InternetExplorer.Application")
     pwb.Visible := False
     pwb.Navigate("https://translate.google.com/#view=home&op=translate&sl=" . originalLang . "&tl=" . tragetLang . "&text=" text)
-    
+
     Loop {
         IfWinExist, ahk_exe iexplorer.exe
             Process, Close, iexplorer.exe
         else
             break
     } While pwb.readyState != 4 || pwb.document.readyState != "complete" || pwb.busy
-    
+
     Sleep, 1
     result := pwb.document.all.result_box.InnerText
     pwb.Quit
-    
+
 return, result
 } 

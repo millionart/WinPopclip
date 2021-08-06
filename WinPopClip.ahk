@@ -31,7 +31,7 @@ controlHight:=25
 winHeightPx:=controlHight*dpiRatio
 bGColor:="000000"
 fontColor:="ffffff"
-ver:="0.9"
+ver:="0.91"
 fontSize:=12
 fontFamily:="微软雅黑"
 userLanguage:="zh-CN"
@@ -177,72 +177,72 @@ GetSelectText()
     {
         ; https://daringfireball.net/2010/07/improved_regex_for_matching_urls
         urlRegEx:="(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'.,<>?«»“”‘’]))"
-        RegExMatch(selectText, urlRegEx, linkText)
+            RegExMatch(selectText, urlRegEx, linkText)
 
-        urlRegEx:="av\d+"
-        RegExMatch(selectText, urlRegEx, bilibili)
+            urlRegEx:="av\d+"
+            RegExMatch(selectText, urlRegEx, bilibili)
 
-        If (linkText!="")
-            linkText:="http://" . linkText
-        Else If (bilibili!="")
-        {
-            linkText:="https://www.bilibili.com/video/" . bilibili
-            linkButton:="` BiliBili` "
+            If (linkText!="")
+                linkText:="http://" . linkText
+            Else If (bilibili!="")
+            {
+                linkText:="https://www.bilibili.com/video/" . bilibili
+                linkButton:="` BiliBili` "
+            }
         }
     }
-}
 
-ShowWinclip()
-{
-    global
-    local x,y,w,h,winMoveX,winMoveY
-    ;ToolTip, %selectText%
-    Gui, Destroy
-    Gui, +ToolWindow -Caption +AlwaysOnTop ; -DPIScale
-    Gui, Color, %bGColor%
-    Gui, font, s%fontSize% c%fontColor%, %fontFamily%
-    Gui, Add, Text, x0 y0 w0 h%controlHight% -Wrap, ; 初始定位
+    ShowWinclip()
+    {
+        global
+        local x,y,w,h,winMoveX,winMoveY
+        ;ToolTip, %selectText%
+        Gui, Destroy
+        Gui, +ToolWindow -Caption +AlwaysOnTop ; -DPIScale
+        Gui, Color, %bGColor%
+        Gui, font, s%fontSize% c%fontColor%, %fontFamily%
+        Gui, Add, Text, x0 y0 w0 h%controlHight% -Wrap, ; 初始定位
 
-    If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
-    {
-        If (winClipToggle=1)
+        If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
         {
-            Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
-            Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
-        }
-    }
-    Else
-    {
-        Gui, Add, Button, x+0 yp hp -Wrap vsearch gGoogleSearch, ` 🔍` ` 
-        If (linkText!="")
-            Gui, Add, Button, x+0 yp hp -Wrap gLink, ` %linkButton%` ` 	
-        Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
-        If (winClipToggle=1)
-        {
-            Gui, Add, Button, x+0 yp hp -Wrap vcut gCut, ` ` 剪切` ` `
-            Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
-            Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+            If (winClipToggle=1)
+            {
+                Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+                Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+            }
         }
         Else
         {
-            Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
+            Gui, Add, Button, x+0 yp hp -Wrap vsearch gGoogleSearch, ` 🔍` ` 
+            If (linkText!="")
+                Gui, Add, Button, x+0 yp hp -Wrap gLink, ` %linkButton%` ` 	
+            Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
+            If (winClipToggle=1)
+            {
+                Gui, Add, Button, x+0 yp hp -Wrap vcut gCut, ` ` 剪切` ` `
+                Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
+                Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
+            }
+            Else
+            {
+                Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
+            }
+            Gui, Add, Button, x+0 yp hp -Wrap vgTranslate gGoogleTranslate, ` ` G 翻译` ` ` 
+            Gui, Add, Button, x+0 yp hp -Wrap vdTranslate gDeepLTranslate, ` ` D 翻译` ` ` 
         }
-        Gui, Add, Button, x+0 yp hp -Wrap vgTranslate gGoogleTranslate, ` ` G 翻译` ` ` 
-        Gui, Add, Button, x+0 yp hp -Wrap vdTranslate gDeepLTranslate, ` ` D 翻译` ` ` 
+
+        Gui, font
+        Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
+        WinGetPos , x, y, w, h, %winTitle%
+
+        winMoveX:=x-w/2,0
+        If (winMoveX > VirtualWidth-w+15*dpiRatio)
+            winMoveX:=VirtualWidth-w+15*dpiRatio
+
+        winMoveY:=Max(y,0)
+
+        WinMove, %winTitle%, , winMoveX, winMoveY, w-15*dpiRatio, %winHeightPx%
     }
-
-    Gui, font
-    Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
-    WinGetPos , x, y, w, h, %winTitle%
-
-    winMoveX:=x-w/2,0
-    If (winMoveX > VirtualWidth-w+15*dpiRatio)
-        winMoveX:=VirtualWidth-w+15*dpiRatio
-
-    winMoveY:=Max(y,0)
-
-    WinMove, %winTitle%, , winMoveX, winMoveY, w-15*dpiRatio, %winHeightPx%
-}
 
 GoogleSearch:
     Gui, Destroy
@@ -273,7 +273,7 @@ Copy:
         FileDelete, %SyncPath%\WinPopclip
         FileAppend,
         (
-        %selectText%
+            %selectText%
         ), %SyncPath%\WinPopclip
     }
 Return
@@ -306,18 +306,20 @@ Return
 
 DeepLTranslate:
     Gui, Destroy
-    selectText:=UriEncode(selectText)
+    selectText:=UriEncode(selectText,1)
     Run, https://www.deepl.com/translator#auto/%userLanguage%/%selectText%
 Return
 
 ; from http://the-automator.com/parse-url-parameters/
-UriEncode(Uri, RE="[0-9A-Za-z]"){
+UriEncode(Uri, Mode := 0, RE="[0-9A-Za-z]"){
     VarSetCapacity(Var,StrPut(Uri,"UTF-8"),0),StrPut(Uri,&Var,"UTF-8")
     While Code:=NumGet(Var,A_Index-1,"UChar")
         Res.=(Chr:=Chr(Code))~=RE?Chr:Format("%{:02X}",Code)
 
     Res:=StrReplace(Res, "&", "%26")
     Res:=StrReplace(Res, "`n", "%0A")
+    If (Mode==1)
+        Res:=StrReplace(Res, "%2F", "%5C%2F")
 Return,Res
 }
 

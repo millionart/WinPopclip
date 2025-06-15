@@ -4,6 +4,7 @@ battle.net.exe
 bcompare.exe
 chrome.exe
 code.exe
+discord.exe
 dreamweaver.exe
 emeditor.exe
 explorer.exe
@@ -19,9 +20,11 @@ notepad.exe
 opera.exe
 poedit.exe
 qq.exe
+rider64.exe
 steam.exe
 steamwebhelper.exe
 tim.exe
+unity.exe
 vivaldi.exe
 wechat.exe
 wechatstore.exe

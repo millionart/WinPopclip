@@ -23,23 +23,25 @@ if not (A_IsAdmin or RegExMatch(full_command_line, " /restart(?!\S)"))
     ExitApp
 }
 
-; MsgBox A_IsAdmin: %A_IsAdmin%`nCommand line: %full_command_line%
-
 winTitle:="WinClipTitle"
 dpiRatio:=A_ScreenDPI/96
 controlHight:=25
 winHeightPx:=controlHight*dpiRatio
 bGColor:="000000"
 fontColor:="ffffff"
-ver:="0.91"
+ver:="0.92"
 fontSize:=12
 fontFamily:="微软雅黑"
 userLanguage:="zh-CN"
+userLanguageDeepL:="zh-hans"
 SyncPath:="E:\Dropbox"
 SysGet, VirtualWidth, 78
 SysGet, VirtualHeight, 79
 
-Loop, read, %A_ScriptDir%/White List.txt
+; *** NEW: 初始化一个全局时间戳，用于冷却机制 ***
+global g_lastActionTime := 0
+
+Loop, read, %A_ScriptDir%/WhiteList.txt
 {
     GroupAdd, whiteList, ahk_exe %A_LoopReadLine%
 }
@@ -74,69 +76,77 @@ ExitScrit:
 ExitApp
 Return
 
-#IfWinNotActive, ahk_group whiteList
+; =================================================================================
+; ========================  核心逻辑修改：统一的全局热键  ========================
+; =================================================================================
+
+global selectionStartedAsIBeam := false
+
 ~LButton::
-    Gui,Destroy
+    ; *** FIX: 引入冷却时间，防止高频操作导致的状态冲突 ***
+    ; 如果距离上一次成功弹出菜单的时间太短，则忽略本次点击。
+    if (A_TickCount - g_lastActionTime < 250)
+        return
+
+    if WinExist(winTitle)
+    {
+        MouseGetPos, ,, hwndUnderMouse
+        if (hwndUnderMouse == WinExist(winTitle))
+            return
+        Gui, Destroy
+    }
+
+    if (A_TimeSincePriorHotkey < 400 and A_Cursor = "IBeam")
+    {
+        dragInProgress := false 
+        Sleep, 50 
+        GetSelectText()
+        If (selectText != "")
+        {
+            MouseGetPos, curPosX, curPosY
+            guiShowX:=curPosX
+            guiShowY:=curPosY-winHeightPx*2
+            ShowWinclip()
+        }
+        return
+    }
+
+    if WinActive("ahk_group whiteList")
+    {
+        dragInProgress := true
+        MouseGetPos, perPosX, perPosY
+        selectionStartedAsIBeam := (A_Cursor = "IBeam")
+    }
 Return
-#IfWinNotActive
+
+; =================================================================================
 
 #IfWinActive, ahk_group whiteList
-    ; 如果不在脚本界面状态下
-$LButton::
-    ; ToolTip, %win% %A_TickCount%, 0,0
-    ; 获得鼠标当前坐标
-    MouseGetPos, perPosX, perPosY
-    ; 获得当前时间
-    preTime:=A_TickCount
-    If (A_Cursor="IBeam")
-        winClipToggle:=1
+    global dragInProgress := false
 
-    Send, {LButton Down}
-    KeyWait, LButton
-
-    Send, {LButton Up}
-
-    If (A_Cursor="IBeam")
-        winClipToggle:=1
-
-    If !WinActive(winTitle)
-    {
-        win:= WinExist("A")
-        ShowMainGui(perPosX,perPosY,preTime) 
-    }
-Return
+    ~LButton Up::
+        If !dragInProgress
+            return
+        dragInProgress := false
+        win := WinExist("A")
+        ShowMainGui(perPosX, perPosY)
+        Return
 #IfWinActive
 
-ShowMainGui(perPosX,perPosY,preTime)
+ShowMainGui(perPosX,perPosY)
 {
     global
-    ; 获得当前时间
-    curTime:=A_TickCount
-    ; 当前时间减去之前时间
-    lButtonDownDelay:=curTime-preTime
-
-    ; 获得鼠标当前坐标
     MouseGetPos, curPosX, curPosY
-
-    guiShowX:=curPosX
-    guiShowY:=curPosY-winHeightPx*2 ;*dpiRatio
-
-    If (A_TimeSincePriorHotkey < 410) && (A_Cursor="IBeam")
+    moveX:=abs(curPosX-perPosX)
+    moveY:=abs(curPosY-perPosY)
+    
+    If (moveX > 10) || (moveY > 10)
     {
-
         GetSelectText()
-        ShowWinclip()
-    }
-    Else if (lButtonDownDelay > 250 && winClipToggle=1) || (lButtonDownDelay > 350)
-    {
-        ; 当前坐标剪去先前坐标
-        moveX:=abs(curPosX-perPosX)
-        moveY:=abs(curPosY-perPosY)
-
-        ; 如果X大于10，Y大于10, 在当前坐标弹出界面
-        If (moveX>10) || (moveY>10)
+        If (selectText != "")
         {
-            GetSelectText()
+            guiShowX:=curPosX
+            guiShowY:=curPosY-winHeightPx*2
             ShowWinclip()
         }
     }
@@ -144,8 +154,6 @@ ShowMainGui(perPosX,perPosY,preTime)
     {
         Gui, Destroy
     }
-
-    winClipToggle:=0
 }
 
 GetSelectText()
@@ -153,96 +161,97 @@ GetSelectText()
     global
     ClipSaved:=ClipBoardAll
     ClipBoard:=""
-    ; PostMessage, 0x301, , , , ahk_id %win% 
-    ; PostMessage WM_COPY not work for some windows (even steam or notepad and more), why?
-    Send, {CtrlDown}c
-    ClipWait 0.1, 1
-    Send, {CtrlUp}
+    Send, ^c
+    ClipWait, 0.5
     selectText:=ClipBoard
     ClipBoard:=""
     ClipBoard:=ClipSaved
     ClipSaved:=""
-    ; 处理协议地址
+
+    If (selectText = "")
+        Return
+
     linkText:=""
     linkButton:="🔗"
-    ; https://gist.github.com/dperini/729294
-    ; https://mathiasbynens.be/demo/url-regex
     urlRegEx:="(?:(?:https?|ftp|file|ed2k|steam|thunder)://)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)(?:\.(?:[a-z\x{00a1}-\x{ffff}0-9]+-?)*[a-z\x{00a1}-\x{ffff}0-9]+)*(?:\.(?:[a-z\x{00a1}-\x{ffff}]{2,})))(?::\d{2,5})?(?:/[^\s]*)?"
     RegExMatch(selectText, urlRegEx, linkText)
-
     urlRegEx:="(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])"
     RegExMatch(selectText, urlRegEx, ipText)
-
     If (linkText="")
     {
-        ; https://daringfireball.net/2010/07/improved_regex_for_matching_urls
         urlRegEx:="(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'.,<>?«»“”‘’]))"
-            RegExMatch(selectText, urlRegEx, linkText)
-
-            urlRegEx:="av\d+"
-            RegExMatch(selectText, urlRegEx, bilibili)
-
-            If (linkText!="")
-                linkText:="http://" . linkText
-            Else If (bilibili!="")
-            {
-                linkText:="https://www.bilibili.com/video/" . bilibili
-                linkButton:="` BiliBili` "
-            }
+        RegExMatch(selectText, urlRegEx, linkText)
+        urlRegEx:="av\d+"
+        RegExMatch(selectText, urlRegEx, bilibili)
+        If (linkText!="")
+            linkText:="http://" . linkText
+        Else If (bilibili!="")
+        {
+            linkText:="https://www.bilibili.com/video/" . bilibili
+            linkButton:="` BiliBili` "
         }
     }
+}
 
-    ShowWinclip()
+ShowWinclip()
+{
+    global
+    local x,y,w,h,winMoveX,winMoveY
+    Gui, Destroy
+    Gui, +ToolWindow -Caption +AlwaysOnTop -DPIScale
+    Gui, Color, %bGColor%
+    Gui, font, s%fontSize% c%fontColor%, %fontFamily%
+    Gui, Add, Text, x0 y0 w0 h%controlHight% -Wrap,
+
+    isEditableContext := (selectionStartedAsIBeam or (A_Cursor = "IBeam"))
+
+    If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
     {
-        global
-        local x,y,w,h,winMoveX,winMoveY
-        ;ToolTip, %selectText%
-        Gui, Destroy
-        Gui, +ToolWindow -Caption +AlwaysOnTop ; -DPIScale
-        Gui, Color, %bGColor%
-        Gui, font, s%fontSize% c%fontColor%, %fontFamily%
-        Gui, Add, Text, x0 y0 w0 h%controlHight% -Wrap, ; 初始定位
-
-        If selectText in ,%A_Space%,%A_Tab%,`r`n,`r,`n
+        If (isEditableContext)
         {
-            If (winClipToggle=1)
-            {
-                Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
-                Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
-            }
+            Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` `
+            Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` `
+        }
+    }
+    Else
+    {
+        Gui, Add, Button, x+0 yp hp -Wrap vsearch gGoogleSearch, ` 🔍` `
+        If (linkText!="")
+            Gui, Add, Button, x+0 yp hp -Wrap gLink, ` %linkButton%` `
+        Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` `
+        If (isEditableContext)
+        {
+            Gui, Add, Button, x+0 yp hp -Wrap vcut gCut, ` ` 剪切` ` `
+            Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` `
+            Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` `
         }
         Else
         {
-            Gui, Add, Button, x+0 yp hp -Wrap vsearch gGoogleSearch, ` 🔍` ` 
-            If (linkText!="")
-                Gui, Add, Button, x+0 yp hp -Wrap gLink, ` %linkButton%` ` 	
-            Gui, Add, Button, x+0 yp hp -Wrap vselectAll gSelectAll, ` ` 全选` ` ` 
-            If (winClipToggle=1)
-            {
-                Gui, Add, Button, x+0 yp hp -Wrap vcut gCut, ` ` 剪切` ` `
-                Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
-                Gui, Add, Button, x+0 yp hp -Wrap vpaste gPaste, ` ` 粘贴` ` ` 
-            }
-            Else
-            {
-                Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` ` 
-            }
-            Gui, Add, Button, x+0 yp hp -Wrap vgTranslate gGoogleTranslate, ` ` G 翻译` ` ` 
-            Gui, Add, Button, x+0 yp hp -Wrap vdTranslate gDeepLTranslate, ` ` D 翻译` ` ` 
+            Gui, Add, Button, x+0 yp hp -Wrap vcopy gCopy, ` ` 复制` ` `
         }
-
-        Gui, font
-        Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
-        WinGetPos , x, y, w, h, %winTitle%
-
-        winMoveX:=x-w/2,0
-        If (winMoveX > VirtualWidth-w+15*dpiRatio)
-            winMoveX:=VirtualWidth-w+15*dpiRatio
-
-        winMoveY:=Max(y,0)
-
-        WinMove, %winTitle%, , winMoveX, winMoveY, w-15*dpiRatio, %winHeightPx%
+        Gui, Add, Button, x+0 yp hp -Wrap vdTranslate gDeepLTranslate, ` ` D 翻译` ` `
     }
+
+    Gui, font
+    Gui, Show, NA AutoSize x%guiShowX% y%guiShowY%, %winTitle%
+    
+    ; *** NEW: 当菜单成功显示前，更新时间戳，启动冷却 ***
+    g_lastActionTime := A_TickCount
+    
+    WinGetPos , winX, winY, winW, winH, %winTitle%
+    MouseGetPos, mouseX, mouseY
+    targetCenterX := winX + winW/2 - winW/2
+    targetCenterY := mouseY - winH/2
+    If (targetCenterX - winW/2 < 0)
+        targetCenterX := winW/2
+    If (targetCenterX + winW/2 > VirtualWidth)
+        targetCenterX := VirtualWidth - winW/2
+    If (targetCenterY - winH/2 < 0)
+        targetCenterY := winH/2
+    If (targetCenterY + winH/2 > VirtualHeight)
+        targetCenterY := VirtualHeight - winH/2
+    WinMove, %winTitle%, , targetCenterX - winW/2, targetCenterY - winH/2, winW-15*dpiRatio, %winHeightPx%
+}
 
 GoogleSearch:
     Gui, Destroy
@@ -271,10 +280,7 @@ Copy:
     {
         FileSetAttrib, -R, %SyncPath%\WinPopclip
         FileDelete, %SyncPath%\WinPopclip
-        FileAppend,
-        (
-            %selectText%
-        ), %SyncPath%\WinPopclip
+        FileAppend, %selectText%, %SyncPath%\WinPopclip
     }
 Return
 
@@ -295,49 +301,38 @@ Return
 Link:
     Gui, Destroy
     Try
-    Run, %linkText%
-Return
-
-GoogleTranslate:
-    Gui, Destroy
-    selectText:=UriEncode(selectText)
-    Run, https://translate.google.com/#view=home&op=translate&sl=auto&tl=%userLanguage%&text=%selectText%
+        Run, %linkText%
 Return
 
 DeepLTranslate:
     Gui, Destroy
     selectText:=UriEncode(selectText,1)
-    Run, https://www.deepl.com/translator#auto/%userLanguage%/%selectText%
+    Run, https://www.deepl.com/translator#en/%userLanguageDeepL%/%selectText%
 Return
 
-; from http://the-automator.com/parse-url-parameters/
 UriEncode(Uri, Mode := 0, RE="[0-9A-Za-z]"){
     VarSetCapacity(Var,StrPut(Uri,"UTF-8"),0),StrPut(Uri,&Var,"UTF-8")
     While Code:=NumGet(Var,A_Index-1,"UChar")
         Res.=(Chr:=Chr(Code))~=RE?Chr:Format("%{:02X}",Code)
-
     Res:=StrReplace(Res, "&", "%26")
     Res:=StrReplace(Res, "`n", "%0A")
     If (Mode==1)
         Res:=StrReplace(Res, "%2F", "%5C%2F")
-Return,Res
+    Return,Res
 }
 
 TransBox(text,originalLang,tragetLang) {
     pwb := ComObjCreate("InternetExplorer.Application")
     pwb.Visible := False
     pwb.Navigate("https://translate.google.com/#view=home&op=translate&sl=" . originalLang . "&tl=" . tragetLang . "&text=" text)
-
     Loop {
         IfWinExist, ahk_exe iexplorer.exe
             Process, Close, iexplorer.exe
         else
             break
     } While pwb.readyState != 4 || pwb.document.readyState != "complete" || pwb.busy
-
     Sleep, 1
     result := pwb.document.all.result_box.InnerText
     pwb.Quit
-
-return, result
-} 
+    return, result
+}
